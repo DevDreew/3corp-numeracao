@@ -1,0 +1,8 @@
+# Deploy ESTATICO no Vercel = serve apenas o index.html.
+# Escondemos os arquivos Python para o Vercel nao tentar buildar como Python.
+app.py
+Site.py
+requirements.txt
+dashboard_template.html
+__pycache__/
+*.pyc

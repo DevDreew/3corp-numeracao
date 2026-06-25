@@ -1,0 +1,12 @@
+# dependências / build
+node_modules/
+.vercel/
+
+# arquivos pesados que não vão pro site
+*.pbix
+*.xlsx
+*.csv
+
+# sistema
+.DS_Store
+Thumbs.db

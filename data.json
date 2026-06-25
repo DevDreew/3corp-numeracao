@@ -1,0 +1,108 @@
+{
+  "kpis": { "total": 156779, "ativo": 94152, "estoque": 62627, "clientes": 220, "ocupacao": 57.5 },
+  "status": [
+    { "label": "PORTADO", "value": 90173 },
+    { "label": "DISPONIVEL", "value": 49286 },
+    { "label": "INDISPONIVEL", "value": 13006 },
+    { "label": "AGUARDANDO", "value": 2448 },
+    { "label": "EM_USO", "value": 1261 },
+    { "label": "RESERVADO", "value": 446 },
+    { "label": "CANCELADO", "value": 137 },
+    { "label": "PORTADO_FORA", "value": 22 }
+  ],
+  "cli": [
+    { "label": "SECRETARIA MUNICIPAL DA SAUDE DE SP - SMSSP", "value": 26700 },
+    { "label": "INSTITUTO NACIONAL DO SEGURO SOCIAL - INSS", "value": 19832 },
+    { "label": "PREFEITURA DE BELO HORIZONTE", "value": 5459 },
+    { "label": "SERVICO NACIONAL DE APRENDIZAGEM COMERCIAL - SENAC RS", "value": 2764 },
+    { "label": "SECRETARIA DE ESTADO DE POLICIA MILITAR - SEPM", "value": 2619 },
+    { "label": "EMPRESA BRASILEIRA DE INFRAESTRUTURA AEROPORTUARIA - INFRAERO", "value": 2005 },
+    { "label": "MINISTERIO PUBLICO DO ESPIRITO SANTO - MPES", "value": 1426 },
+    { "label": "DEFENSORIA PUBLICA DA UNIAO - DPU", "value": 1310 }
+  ],
+  "cid": [
+    { "label": "SAO PAULO", "value": 32812 },
+    { "label": "BRASILIA", "value": 9914 },
+    { "label": "RIO DE JANEIRO", "value": 8816 },
+    { "label": "BELO HORIZONTE", "value": 8018 },
+    { "label": "PORTO ALEGRE", "value": 4279 },
+    { "label": "RECIFE", "value": 3786 },
+    { "label": "VITORIA", "value": 3700 },
+    { "label": "FORTALEZA", "value": 2403 },
+    { "label": "NATAL", "value": 2064 },
+    { "label": "CAMPINAS", "value": 1985 },
+    { "label": "VOLTA REDONDA", "value": 1977 },
+    { "label": "ARACATUBA", "value": 1973 }
+  ],
+  "mapa": [
+    { "uf": "SP", "ativo": 36204, "estoque": 12949 },
+    { "uf": "MG", "ativo": 10754, "estoque": 9014 },
+    { "uf": "RJ", "ativo": 11659, "estoque": 1763 },
+    { "uf": "DF", "ativo": 8919, "estoque": 995 },
+    { "uf": "PR", "ativo": 3391, "estoque": 6000 },
+    { "uf": "RS", "ativo": 5269, "estoque": 4003 },
+    { "uf": "SC", "ativo": 2833, "estoque": 2998 },
+    { "uf": "PE", "ativo": 3559, "estoque": 1696 },
+    { "uf": "ES", "ativo": 2955, "estoque": 2002 },
+    { "uf": "PA", "ativo": 1606, "estoque": 2980 },
+    { "uf": "CE", "ativo": 1861, "estoque": 2000 },
+    { "uf": "RN", "ativo": 1090, "estoque": 1998 },
+    { "uf": "AM", "ativo": 842, "estoque": 2000 },
+    { "uf": "MA", "ativo": 768, "estoque": 2000 },
+    { "uf": "GO", "ativo": 691, "estoque": 1998 },
+    { "uf": "PI", "ativo": 395, "estoque": 2000 },
+    { "uf": "MT", "ativo": 355, "estoque": 2000 },
+    { "uf": "TO", "ativo": 203, "estoque": 2000 },
+    { "uf": "AC", "ativo": 349, "estoque": 1000 },
+    { "uf": "RO", "ativo": 355, "estoque": 991 },
+    { "uf": "BA", "ativo": 5, "estoque": 165 },
+    { "uf": "SE", "ativo": 1, "estoque": 0 }
+  ],
+  "tend": [
+    { "mes": "2026-02", "p": 5 },
+    { "mes": "2026-03", "p": 28542 },
+    { "mes": "2026-04", "p": 49753 },
+    { "mes": "2026-05", "p": 11009 },
+    { "mes": "2026-06", "p": 694 },
+    { "mes": "2026-09", "p": 1 }
+  ],
+  "ddd": [
+    { "label": "84", "value": 2007 },
+    { "label": "33", "value": 2002 },
+    { "label": "63", "value": 2000 },
+    { "label": "18", "value": 2000 },
+    { "label": "17", "value": 2000 },
+    { "label": "34", "value": 1993 },
+    { "label": "19", "value": 1992 },
+    { "label": "11", "value": 1959 },
+    { "label": "31", "value": 1037 },
+    { "label": "47", "value": 1021 },
+    { "label": "54", "value": 1002 },
+    { "label": "27", "value": 1001 }
+  ],
+  "equip": [
+    { "label": "RAINBOW", "ativo": 66225, "estoque": 58 },
+    { "label": "ATTIMO", "ativo": 27333, "estoque": 245 },
+    { "label": "SEM EQUIP", "ativo": 594, "estoque": 62299 }
+  ],
+  "tipo": [
+    { "label": "PORTADO", "value": 92356 },
+    { "label": "NOVO", "value": 63999 },
+    { "label": "DATORA", "value": 190 },
+    { "label": "CANCELADO", "value": 137 },
+    { "label": "0800", "value": 96 },
+    { "label": "TRIDIGITO", "value": 1 }
+  ],
+  "det": [
+    { "n": "551120169559", "eq": "RAINBOW", "cl": "SECRETARIA MUNICIPAL DA SAUDE DE SP - SMSSP", "ci": "SAO PAULO", "st": "PORTADO" },
+    { "n": "551120250391", "eq": "RAINBOW", "cl": "SECRETARIA MUNICIPAL DA SAUDE DE SP - SMSSP", "ci": "SAO PAULO", "st": "PORTADO" },
+    { "n": "551120253271", "eq": "RAINBOW", "cl": "SECRETARIA MUNICIPAL DA SAUDE DE SP - SMSSP", "ci": "SAO PAULO", "st": "PORTADO" },
+    { "n": "551120259468", "eq": "RAINBOW", "cl": "SECRETARIA MUNICIPAL DA SAUDE DE SP - SMSSP", "ci": "SAO PAULO", "st": "PORTADO" },
+    { "n": "551120310007", "eq": "RAINBOW", "cl": "SECRETARIA MUNICIPAL DA SAUDE DE SP - SMSSP", "ci": "SAO PAULO", "st": "PORTADO" },
+    { "n": "551120632783", "eq": "ATTIMO", "cl": "MBIGUCCI CONSTRUTORA", "ci": "SAO PAULO", "st": "PORTADO" },
+    { "n": "551120712422", "eq": "RAINBOW", "cl": "SECRETARIA MUNICIPAL DA SAUDE DE SP - SMSSP", "ci": "SAO PAULO", "st": "PORTADO" },
+    { "n": "551120751140", "eq": "RAINBOW", "cl": "SECRETARIA MUNICIPAL DA SAUDE DE SP - SMSSP", "ci": "SAO PAULO", "st": "PORTADO" },
+    { "n": "551120751145", "eq": "RAINBOW", "cl": "SECRETARIA MUNICIPAL DA SAUDE DE SP - SMSSP", "ci": "SAO PAULO", "st": "PORTADO" },
+    { "n": "551120751150", "eq": "RAINBOW", "cl": "SECRETARIA MUNICIPAL DA SAUDE DE SP - SMSSP", "ci": "SAO PAULO", "st": "PORTADO" }
+  ]
+}
