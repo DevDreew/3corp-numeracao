@@ -33,7 +33,10 @@
   .top{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:14px 26px;
     border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(13,19,32,.92),rgba(10,15,26,.6));
     backdrop-filter:blur(12px);position:sticky;top:0;z-index:1000}
-  .brand{display:flex;align-items:center;gap:13px}
+  .brand{display:flex;align-items:center;gap:13px;cursor:pointer;border-radius:12px;transition:.18s;padding:2px}
+  .brand:hover{opacity:.92}
+  .brand:hover .mark{box-shadow:0 0 0 1px rgba(255,255,255,.25),0 8px 30px var(--cyg);transform:translateY(-1px)}
+  .brand:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
   .mark{width:44px;height:44px;border-radius:12px;position:relative;display:grid;place-items:center;flex-shrink:0;
     background:linear-gradient(135deg,var(--cyan),var(--blue));box-shadow:0 0 0 1px rgba(255,255,255,.14),0 8px 26px var(--cyg)}
   .mark::before{content:'';position:absolute;inset:-2px;border-radius:13px;padding:2px;
@@ -177,7 +180,7 @@
 </head>
 <body>
 <div class="top">
-  <div class="brand">
+  <div class="brand" id="brand-home" role="button" tabindex="0" aria-label="Voltar para Executivo">
     <div class="mark"><b>3C</b></div>
     <div><h1>Numeration Intelligence</h1><p>Telecom · 3CORP Technology</p></div>
   </div>
@@ -302,6 +305,19 @@ const HDR={apikey:SUPA_KEY,Authorization:"Bearer "+SUPA_KEY};
 const $=id=>document.getElementById(id);
 const fmt=n=>Number(n).toLocaleString('pt-BR');
 const C={cyan:'#38bdf8',cyan2:'#7dd3fc',blue:'#2f6bff',amber:'#0ea5e9',green:'#4f8bff',red:'#ff6b7d',violet:'#6366f1',mut:'#76859f',grid:'rgba(46,64,94,.35)'};
+const PAL=['#2f6bff','#38bdf8','#6366f1','#7dd3fc','#4f8bff','#22d3ee','#3b6ea5','#818cf8'];
+const TRI=['#2f6bff','#38bdf8','#708090'];
+function ramp(n){const T=['#38bdf8','#2f6bff','#3b6ea5'];const o=[];for(let i=0;i<n;i++){o.push(T[Math.min(2,Math.floor(i/Math.max(1,n)*3))]);}return o;}
+function barColors(e){return e.length<=7?e.map((x,i)=>PAL[i%PAL.length]):ramp(e.length);}
+function catColor(label){var u=(''+label).toUpperCase();
+  if(u==='PORTADO')return '#00BFFF';
+  if(u==='PORTADO_FORA')return '#1E90FF';
+  if(u==='DISPONIVEL'||u==='DISPONÍVEL')return '#0000CD';
+  if(u==='AGUARDANDO')return '#708090';
+  if(u==='CANCELADO')return '#ff6b7d';
+  var CAD=['#5F9EA0','#4f8b8e','#6fb0b2','#3d7376','#7fbabc','#558587'];
+  var h=0;for(var i=0;i<u.length;i++)h=(h*31+u.charCodeAt(i))>>>0;
+  return CAD[h%CAD.length];}
 Chart.defaults.font.family="'Sora',sans-serif";Chart.defaults.color=C.mut;
 
 // coordenadas aproximadas das capitais por UF (centroide)
@@ -318,9 +334,20 @@ async function getJSON(path,range){
   return r.json();
 }
 async function fetchAll(){
-  let out=[],from=0,pg=1000;
   const sel="numeracoes_dashboard?select=numero_c55,ddd,status,tipo_numero,tipo_carteira,origem_base,cliente,uf,municipio,equipamento,dt_portabilidade";
-  while(true){const c=await getJSON(sel,from+"-"+(from+pg-1));out=out.concat(c);if(c.length<pg)break;from+=pg;$('foot-l').textContent="Carregando… "+fmt(out.length);}
+  const pg=1000;
+  let total=0;
+  try{const head=await fetch(REST+sel+"&limit=1",{headers:Object.assign({},HDR,{Range:"0-0",Prefer:"count=exact"})});const cr=head.headers.get('content-range');if(cr&&cr.indexOf('/')>=0)total=parseInt(cr.split('/')[1])||0;}catch(e){}
+  let out=[];
+  if(total>0){
+    const pages=Math.ceil(total/pg);const ranges=[];for(let i=0;i<pages;i++)ranges.push(i*pg);
+    const limit=6;
+    async function _w(){while(ranges.length){const fr=ranges.shift();const c=await getJSON(sel,fr+"-"+(fr+pg-1));out=out.concat(c);$('foot-l').textContent="Carregando... "+fmt(out.length)+"/"+fmt(total);}}
+    const ws=[];for(let k=0;k<Math.min(limit,pages);k++)ws.push(_w());
+    await Promise.all(ws);
+  }else{
+    let from=0;while(true){const c=await getJSON(sel,from+"-"+(from+pg-1));out=out.concat(c);if(c.length<pg)break;from+=pg;$('foot-l').textContent="Carregando… "+fmt(out.length);}
+  }
   out=out.filter(function(r){return r.status!=='PAUSA';});
   return out;
 }
@@ -337,26 +364,28 @@ const REGIAO={SP:'Sudeste',MG:'Sudeste',RJ:'Sudeste',ES:'Sudeste',PR:'Sul',RS:'S
 /* ---------- CHART HELPERS ---------- */
 function donut(id,data,colors,lgId,onClick){
   const e=Object.entries(data).sort((a,b)=>b[1]-a[1]);if(charts[id])charts[id].destroy();
-  charts[id]=new Chart($(id),{type:'doughnut',data:{labels:e.map(x=>x[0]),datasets:[{data:e.map(x=>x[1]),backgroundColor:colors,borderColor:'#070d1a',borderWidth:3,hoverOffset:7}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)}`}}},
+  const tot=e.reduce((s,x)=>s+x[1],0);const cols=colors||e.map((x,i)=>TRI[i%TRI.length]);
+  charts[id]=new Chart($(id),{type:'doughnut',data:{labels:e.map(x=>x[0]),datasets:[{data:e.map(x=>x[1]),backgroundColor:cols,borderColor:'#070d1a',borderWidth:3,hoverOffset:7}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:!lgId,position:'bottom',labels:{color:'#bfc0d1',padding:12,boxWidth:12,font:{size:11}}},tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)} (${((c.raw/tot)*100).toFixed(1)}%)`}}},
       onClick:(ev,el)=>{if(el.length&&onClick)onClick(e[el[0].index][0]);}}});
-  if(lgId){const tot=e.reduce((s,x)=>s+x[1],0);$(lgId).innerHTML=e.map((x,i)=>`<div class="it" data-v="${x[0]}"><span class="sw" style="background:${colors[i]}"></span><span class="nm">${x[0]}</span><span class="vl">${fmt(x[1])}</span><span class="pc">${((x[1]/tot)*100).toFixed(1)}%</span></div>`).join('');
+  if(lgId){$(lgId).innerHTML=e.map((x,i)=>`<div class="it" data-v="${x[0]}"><span class="sw" style="background:${cols[i]}"></span><span class="nm">${x[0]}</span><span class="vl">${fmt(x[1])}</span><span class="pc">${((x[1]/tot)*100).toFixed(1)}%</span></div>`).join('');
     if(onClick)$(lgId).querySelectorAll('.it').forEach(it=>it.onclick=()=>onClick(it.dataset.v));}
 }
-function barH(id,data,color,limit,onClick){
+function barH(id,data,color,limit,onClick,cat){
   let e=Object.entries(data).sort((a,b)=>b[1]-a[1]);if(limit)e=e.slice(0,limit);if(charts[id])charts[id].destroy();
-  const cv=$(id),ctx=cv.getContext('2d'),g=ctx.createLinearGradient(0,0,cv.width||500,0);g.addColorStop(0,color);g.addColorStop(1,color+'44');
-  charts[id]=new Chart(cv,{type:'bar',data:{labels:e.map(x=>x[0]),datasets:[{data:e.map(x=>x[1]),backgroundColor:g,borderRadius:6,maxBarThickness:24}]},
-    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmt(c.raw)}}},
+  const tot=e.reduce((s,x)=>s+x[1],0);const cols=cat?e.map((x,i)=>TRI[i%TRI.length]):color;
+  charts[id]=new Chart($(id),{type:'bar',data:{labels:e.map(x=>x[0]),datasets:[{data:e.map(x=>x[1]),backgroundColor:cols,borderRadius:6,maxBarThickness:24}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmt(c.raw)+(tot?' ('+((c.raw/tot)*100).toFixed(1)+'%)':'')}}},
       onClick:(ev,el)=>{if(el.length&&onClick)onClick(e[el[0].index][0]);},
-      scales:{x:{grid:{color:C.grid},ticks:{font:{size:10}}},y:{grid:{display:false},ticks:{font:{family:"'JetBrains Mono'",size:11}}}}}});
+      scales:{x:{grid:{color:C.grid},ticks:{font:{size:10}}},y:{grid:{display:false},ticks:{color:'#bfc0d1',font:{family:"'JetBrains Mono'",size:11}}}}}});
 }
 function barV(id,data,color,onClick){
   const e=Object.entries(data).sort((a,b)=>b[1]-a[1]);if(charts[id])charts[id].destroy();
-  charts[id]=new Chart($(id),{type:'bar',data:{labels:e.map(x=>x[0]),datasets:[{data:e.map(x=>x[1]),backgroundColor:color,borderRadius:6,maxBarThickness:34}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmt(c.raw)}}},
+  const tot=e.reduce((s,x)=>s+x[1],0);const cols=color;
+  charts[id]=new Chart($(id),{type:'bar',data:{labels:e.map(x=>x[0]),datasets:[{data:e.map(x=>x[1]),backgroundColor:cols,borderRadius:6,maxBarThickness:34}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmt(c.raw)+(tot?' ('+((c.raw/tot)*100).toFixed(1)+'%)':'')}}},
       onClick:(ev,el)=>{if(el.length&&onClick)onClick(e[el[0].index][0]);},
-      scales:{x:{grid:{display:false},ticks:{font:{family:"'JetBrains Mono'",size:10}}},y:{grid:{color:C.grid},ticks:{callback:v=>v>=1000?(v/1000)+'k':v,font:{size:10}}}}}});
+      scales:{x:{grid:{display:false},ticks:{color:'#bfc0d1',font:{family:"'JetBrains Mono'",size:10}}},y:{grid:{color:C.grid},ticks:{callback:v=>v>=1000?(v/1000)+'k':v,font:{size:10}}}}}});
 }
 function line(id,serie,onClick){
   if(charts[id])charts[id].destroy();const cv=$(id),ctx=cv.getContext('2d'),g=ctx.createLinearGradient(0,0,0,340);
@@ -378,12 +407,13 @@ function renderKPIs(rows){
     port=rows.filter(r=>(r.status==='PORTADO'||r.status==='PORTADO_FORA')).length,canc=rows.filter(r=>r.status==='CANCELADO').length,agu=rows.filter(r=>r.status==='AGUARDANDO').length;
   const clientes=new Set(rows.filter(r=>(r.status==='PORTADO'||r.status==='PORTADO_FORA')&&r.cliente&&r.cliente!=='SEM CLIENTE').map(r=>r.cliente)).size;
   const pct=t?((port/t)*100).toFixed(1):0;
+  const pctEst=t?((est/t)*100).toFixed(1):0;
   $('kpis').innerHTML=
     kpiCard(C.cyan,'rgba(47,107,255,.14)','▦','Total Números',fmt(t),'inventário filtrado','total')+
-    kpiCard(C.green,'rgba(79,139,255,.14)','◉','Total Ativo',fmt(cli),`<span class="up">${pct}%</span> ocupação`,'CLIENTE')+
-    kpiCard(C.cyan2,'rgba(125,211,252,.14)','◍','Total Clientes',fmt(clientes),'empresas c/ portado','CLIENTE')+
+    kpiCard(C.cyan2,'rgba(125,211,252,.14)','◴','% Estoque',pctEst+'%','do total em estoque','ESTOQUE')+
+    kpiCard(C.blue,'rgba(47,107,255,.14)','◍','Total Clientes',fmt(clientes),'empresas c/ portado','CLIENTE')+
     kpiCard(C.amber,'rgba(14,165,233,.14)','◷','Total Estoque',fmt(est),'disponível p/ vender','ESTOQUE')+
-    kpiCard(C.blue,'rgba(47,107,255,.14)','⇄','Portados',fmt(port),'portabilidade in','PORTADO')+
+    kpiCard(C.green,'rgba(79,139,255,.14)','⇄','Portados',fmt(port),`<span class="up">${pct}%</span> ocupação`,'PORTADO')+
     kpiCard(C.violet,'rgba(99,102,241,.14)','⏸','Aguardando',fmt(agu),'em processo','AGUARDANDO')+
     kpiCard(C.red,'rgba(255,107,125,.14)','✕','Cancelados',fmt(canc),'churn de número','CANCELADO');
   $('pill-exec').textContent=fmt(t)+' números';
@@ -430,7 +460,7 @@ function drillUF(uf){
   openDrawer('DRILL · ESTADO',uf+' — '+(REGIAO[uf]||'—'),fmt(sub.length)+' números neste estado',
     [{l:'Total',v:fmt(sub.length)},{l:'Ativo',v:fmt(cli),s:((cli/sub.length)*100).toFixed(0)+'% ocupação'},
      {l:'Estoque',v:fmt(est)},{l:'Municípios',v:new Set(sub.map(r=>r.municipio)).size}],
-    {type:'doughnut',data:{labels:e.map(x=>x[0]),datasets:[{data:e.map(x=>x[1]),backgroundColor:[C.cyan,C.blue,C.mut,C.amber],borderColor:'#070d1a',borderWidth:3}]},
+    {type:'doughnut',data:{labels:e.map(x=>x[0]),datasets:[{data:e.map(x=>x[1]),backgroundColor:e.map((x,i)=>TRI[i%TRI.length]),borderColor:'#070d1a',borderWidth:3}]},
       options:{responsive:true,maintainAspectRatio:false,cutout:'66%',plugins:{legend:{position:'bottom',labels:{padding:12,font:{size:11}}}}}},
     '<h4 style="font-size:11px;color:var(--mut);font-family:var(--mono);letter-spacing:1px;margin-bottom:8px">NÚMEROS EM '+uf+'</h4>'+drillTable(sub));
 }
@@ -479,10 +509,10 @@ function renderMap(rows){
 /* ---------- RENDER ALL ---------- */
 function renderExec(rows){
   renderKPIs(rows);
-  donut('ch-cart',cnt(rows,'tipo_carteira'),[C.cyan,C.amber],'lg-cart',v=>drillKPI(v,rows));
-  donut('ch-equip',cnt(rows,'equipamento'),[C.cyan,C.blue,C.mut],'lg-equip',v=>drillGeneric('Equipamento '+v,rows.filter(r=>r.equipamento===v)));
-  donut('ch-tipo',cnt(rows,'tipo_numero'),[C.cyan,C.amber,C.blue,C.red,C.violet,C.green],null,v=>drillGeneric('Tipo '+v,rows.filter(r=>r.tipo_numero===v)));
-  donut('ch-status',cnt(rows,'status'),[C.green,C.cyan,C.amber,C.blue,C.violet,C.red,'#888','#5a6'],null,v=>drillGeneric('Status '+v,rows.filter(r=>r.status===v)));
+  donut('ch-cart',cnt(rows,'tipo_carteira'),null,'lg-cart',v=>drillKPI(v,rows));
+  donut('ch-equip',cnt(rows,'equipamento'),null,'lg-equip',v=>drillGeneric('Equipamento '+v,rows.filter(r=>r.equipamento===v)));
+  barH('ch-tipo',cnt(rows,'tipo_numero'),C.cyan,null,v=>drillGeneric('Tipo '+v,rows.filter(r=>r.tipo_numero===v)));
+  barH('ch-status',cnt(rows,'status'),C.cyan,null,v=>drillGeneric('Status '+v,rows.filter(r=>r.status===v)));
   const anyF=['f-cliente','f-uf','f-ddd','f-equip','f-cart','f-origem'].some(id=>$(id).value)||$('f-busca').value;
   const serie=anyF?seriesFrom(rows):SERIE;
   line('ch-line',serie,drillMes);
@@ -492,9 +522,9 @@ function seriesFrom(rows){const sm={};rows.filter(r=>r.dt_portabilidade).forEach
 function renderGeo(rows){
   renderMap(rows);
   barH('ch-uf',cnt(rows.filter(r=>r.uf!=='N/D'),'uf'),C.cyan,null,drillUF);
-  barH('ch-mun',cnt(rows.filter(r=>r.municipio!=='N/D'),'municipio'),C.blue,12,v=>drillGeneric('Município '+v,rows.filter(r=>r.municipio===v)));
+  barH('ch-mun',cnt(rows.filter(r=>r.municipio!=='N/D'),'municipio'),C.cyan,12,v=>drillGeneric('Município '+v,rows.filter(r=>r.municipio===v)));
   const reg={};rows.filter(r=>r.uf!=='N/D').forEach(r=>{const g=REGIAO[r.uf]||'Outros';reg[g]=(reg[g]||0)+1});
-  donut('ch-regiao',reg,[C.cyan,C.blue,C.amber,C.green,C.violet],null,null);
+  donut('ch-regiao',reg,null,null,null);
 }
 function renderPort(rows){
   const port=rows.filter(r=>(r.status==='PORTADO'||r.status==='PORTADO_FORA')).length,canc=rows.filter(r=>r.status==='CANCELADO').length,
@@ -507,7 +537,7 @@ function renderPort(rows){
   $('pill-port').textContent=fmt(port)+' portados';
   const anyF=['f-cliente','f-uf','f-ddd','f-equip','f-cart','f-origem'].some(id=>$(id).value)||$('f-busca').value;
   line('ch-line2',anyF?seriesFrom(rows):SERIE,drillMes);
-  barH('ch-origem',cnt(rows,'origem_base'),C.violet,null,v=>drillGeneric('Origem '+v,rows.filter(r=>r.origem_base===v)));
+  barH('ch-origem',cnt(rows,'origem_base'),C.cyan,null,v=>drillGeneric('Origem '+v,rows.filter(r=>r.origem_base===v)));
 }
 function renderCom(rows){
   const est=rows.filter(r=>r.tipo_carteira==='ESTOQUE'),estUF={},estDDD={};
@@ -518,10 +548,10 @@ function renderCom(rows){
     {ac:C.cyan,ib:'rgba(47,107,255,.14)',ic:'#',lbl:'DDDs c/ estoque',val:Object.keys(estDDD).length,sub:'regiões disponíveis'},
     {ac:C.blue,ib:'rgba(47,107,255,.14)',ic:'◍',lbl:'UFs c/ estoque',val:Object.keys(estUF).length,sub:'estados'},
     {ac:C.green,ib:'rgba(79,139,255,.14)',ic:'★',lbl:'Maior DDD',val:Object.entries(estDDD).sort((a,b)=>b[1]-a[1])[0]?.[0]||'—',sub:'mais estoque'}]);
-  barH('ch-ddd',estDDD,C.amber,12,drillDDD);
+  barH('ch-ddd',estDDD,C.cyan,12,drillDDD);
   barV('ch-est-uf',estUF,C.cyan,drillUF);
   const cliM={};rows.filter(r=>r.cliente&&r.cliente!=='SEM CLIENTE').forEach(r=>{cliM[r.cliente]=(cliM[r.cliente]||0)+1});
-  barH('ch-cliente',cliM,C.violet,10,v=>drillGeneric('Cliente '+v.slice(0,20),rows.filter(r=>r.cliente===v)));
+  barH('ch-cliente',cliM,C.cyan,10,v=>drillGeneric('Cliente '+v.slice(0,20),rows.filter(r=>r.cliente===v)));
 }
 let sk='numero_c55',sd=1;
 function renderDet(rows){
@@ -550,6 +580,9 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   curPage=t.dataset.pg;$('pg-'+curPage).classList.add('on');
   refresh();if(curPage==='geo'&&map)setTimeout(()=>map.invalidateSize(),100);
 });
+function goExec(){const t=document.querySelector('.tab[data-pg="exec"]');if(t)t.click();}
+$('brand-home').addEventListener('click',goExec);
+$('brand-home').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();goExec();}});
 ['f-cliente','f-uf','f-ddd','f-equip','f-cart','f-origem'].forEach(id=>$(id).onchange=refresh);
 $('f-busca').oninput=()=>{clearTimeout(window._t);window._t=setTimeout(refresh,250)};
 $('reset').onclick=()=>{['f-cliente','f-uf','f-ddd','f-equip','f-cart','f-origem'].forEach(id=>$(id).value='');$('f-busca').value='';refresh();};
