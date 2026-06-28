@@ -1,11 +1,28 @@
-# dependências / build
-node_modules/
-.vercel/
+# dependências
+/node_modules
+
+# build do Next.js
+/.next/
+/out/
+/build
+next-env.d.ts
+
+# vercel
+.vercel
+
+# logs / debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.tsbuildinfo
 
 # arquivos pesados que não vão pro site
 *.pbix
 *.xlsx
 *.csv
+
+# variáveis de ambiente locais
+.env*.local
 
 # sistema
 .DS_Store
